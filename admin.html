@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .admin-layout { max-width:1180px; margin: 1.5rem auto; padding: 0 1.25rem; }
+    .admin-top { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+    .admin-tab-content { padding: .6rem 0; }
+    .hidden { display:none !important; }
+    .table td, .table th { white-space: nowrap; }
+    .glass { background: #fff; border-radius: 8px; padding: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    .kicker { color:#666; font-size: .85rem; margin-bottom: .4rem; }
+    .h1-future { font-size: 1.8rem; font-weight: 700; }
+    .small { font-size: .85rem; }
+    .muted { color: #667; }
+    .btn { padding: .4rem .6rem; border-radius:6px; border:1px solid #ddd; background:#f7f7f7; cursor:pointer; }
+    .btn-primary { background:#2b7cff; color:#fff; border-color:#2b7cff; }
+    .btn-danger { background:#ff4d4f; color:#fff; border-color:#ff4d4f; }
+    .input { padding:.45rem .5rem; border:1px solid #ddd; border-radius:6px; }
+    .modal { position:fixed; left:0; right:0; top:0; bottom:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); }
+    .modal.hidden { display:none; }
+    .modal-content { background:white; border-radius:8px; max-width:760px; width:100%; }
+    .table { width:100%; border-collapse:collapse; }
+    .table th, .table td { padding:8px 10px; border-bottom:1px solid #eee; text-align:left; }
+  </style>
+</head>
+<body>
+  <header style="display:flex;justify-content:space-between;align-items:center;padding:12px 1.25rem;background:#fafafa;border-bottom:1px solid #eee">
+    <div style="display:flex;gap:12px;align-items:center">
+      <div style="width:44px;height:44px;background:#2b7cff;color:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800">AD</div>
+      <div>
+        <div style="font-weight:800">Admin Panel</div>
+        <div class="small muted">Test results & reports</div>
+      </div>
+    </div>
+
+    <nav style="display:flex;gap:.5rem;align-items:center">
+      <button id="btnOverview" class="btn">Overview</button>
+      <button id="btnSections" class="btn">By Section</button>
+      <button id="btnDatewise" class="btn">By Date</button>
+      <button id="btnStudents" class="btn">Manage Students</button>
+      <button id="btnExport" class="btn">Export CSV</button>
+      <button id="adminLogoutBtn" class="btn btn-danger">Logout</button>
+    </nav>
+  </header>
+
+  <main class="admin-layout">
+    <div class="admin-top">
+      <div>
+        <h2 style="margin:0">Admin Dashboard</h2>
+        <div class="small muted">Overview of tests, students, typing & MCQ results</div>
+      </div>
+      <div style="display:flex;gap:.6rem;align-items:center;">
+        <div class="small muted">Signed in as <strong>Admin</strong></div>
+        <button id="refreshBtn" class="btn">Refresh</button>
+      </div>
+    </div>
+
+    <!-- Overview -->
+    <section id="adminOverviewTab" class="admin-tab-content">
+      <div id="adminMain" class="glass"></div>
+      <noscript><div class="glass"><p class="small muted">JavaScript is required to load admin content.</p></div></noscript>
+    </section>
+
+    <!-- Sections -->
+    <section id="adminSectionsTab" class="admin-tab-content hidden"><div id="adminInner" class="glass"></div></section>
+
+    <!-- Datewise -->
+    <section id="adminDatewiseTab" class="admin-tab-content hidden"><div id="adminContent" class="glass"></div></section>
+
+    <!-- Students -->
+    <section id="adminStudentsTab" class="admin-tab-content hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.6rem">
+        <div>
+          <h3 class="kicker">Manage Students</h3>
+          <div class="small muted">Add, edit, view and delete student profiles</div>
+        </div>
+        <div style="display:flex;gap:.6rem">
+          <input id="studentSearch" class="input" placeholder="Search by username or name" style="min-width:220px" />
+          <button id="openAddStudentBtn" class="btn btn-primary">+ Add Student</button>
+          <button id="refreshStudentsBtn" class="btn">Refresh</button>
+        </div>
+      </div>
+
+      <div id="studentsWrapper" class="glass" style="padding:.6rem">
+        <div class="small muted" id="studentsCount">Loading students…</div>
+        <div style="overflow:auto;margin-top:.6rem">
+          <table class="table" id="studentsTable">
+            <thead><tr><th>Username / ID</th><th>Name</th><th>DOB</th><th>Tests</th><th>Actions</th></tr></thead>
+            <tbody id="studentsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap;">
+      <div class="glass" style="padding:.7rem;">
+        <div class="kicker">Diagnostics</div>
+        <div class="small muted">Use console for deeper debugging. Click Refresh to re-run the renderer.</div>
+        <div style="margin-top:.6rem">
+          <button id="runRender" class="btn btn-primary">Run render</button>
+          <button id="openConsole" class="btn">Open console</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Student Modal -->
+    <div id="addStudentModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-content glass" style="padding:1rem; max-width:560px;">
+        <h3 style="margin:0 0 .5rem 0">Add / Edit Student</h3>
+        <form id="addStudentForm">
+          <div style="margin-top:.6rem">
+            <label class="small muted">Username (unique)</label>
+            <input id="addStudentUsername" class="input" required />
+          </div>
+          <div style="margin-top:.6rem">
+            <label class="small muted">Name</label>
+            <input id="addStudentName" class="input" />
+          </div>
+          <div style="margin-top:.6rem">
+            <label class="small muted">Date of Birth</label>
+            <input id="addStudentDOB" class="input" type="date" />
+          </div>
+
+          <div style="display:flex;gap:.6rem;justify-content:flex-end;margin-top:.8rem">
+            <button type="button" id="closeAddStudentModal" class="btn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Firebase SDKs: keep your firebase-config.js separate -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+  <!-- Your firebase config -->
+  <script src="js/firebase-config.js"></script>
+
+  <!-- App modules -->
+  <script src="js/questions.js"></script>
+  <script src="js/mcq-test.js"></script>
+  <script src="js/typing-content.js"></script>
+  <script src="js/typing-test.js"></script>
+  <script src="js/dashboard.js"></script>
+
+  <!-- Core admin script (replace with provided admin.js) -->
+  <script src="js/admin.js"></script>
+
+  <!-- Optional add-ons -->
+  <script src="js/admin-date-analysis.js"></script>
+
+  <!-- Auth & App bootstrap -->
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // Client-side tab wiring (keeps UI snappy)
+    function showSection(id) {
+      ['adminOverviewTab','adminSectionsTab','adminDatewiseTab','adminStudentsTab'].forEach(k => {
+        const el = document.getElementById(k);
+        if (!el) return;
+        if (k === id) el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
+    }
+
+    document.getElementById('btnOverview').addEventListener('click', ()=> { showSection('adminOverviewTab'); if (window.doFetchAndRender) window.doFetchAndRender('overview'); });
+    document.getElementById('btnSections').addEventListener('click', ()=> { showSection('adminSectionsTab'); if (window.doFetchAndRender) window.doFetchAndRender('section'); });
+    document.getElementById('btnDatewise').addEventListener('click', ()=> { showSection('adminDatewiseTab'); if (window.doFetchAndRender) window.doFetchAndRender('datewise'); });
+    document.getElementById('btnStudents').addEventListener('click', ()=> { showSection('adminStudentsTab'); if (window.adminFetchStudents) window.adminFetchStudents(); });
+
+    document.getElementById('refreshBtn').addEventListener('click', ()=> { if (window.doFetchAndRender) window.doFetchAndRender('overview'); });
+    document.getElementById('runRender').addEventListener('click', ()=> { if (window.doFetchAndRender) window.doFetchAndRender('overview'); });
+    document.getElementById('openConsole').addEventListener('click', ()=> { console.log('Open console to inspect variables (window.doFetchAndRender, window.__admin_debug)'); });
+
+    // Export CSV uses admin.js fetchResultsRaw
+    document.getElementById('btnExport').addEventListener('click', async ()=> {
+      if (typeof window.fetchResultsRaw !== 'function') { alert('Export unavailable'); return; }
+      try {
+        const docs = await window.fetchResultsRaw(5000);
+        if (!docs || !docs.length) { alert('No documents to export'); return; }
+        const rows = docs.map(d => {
+          const raw = d.data || {};
+          const date = (raw.date && raw.date.toDate) ? raw.date.toDate().toISOString() : (raw.date || raw.createdAt || d.meta && d.meta.createTime || '');
+          return {
+            id: d.id,
+            student: raw.studentName || raw.student || raw.username || '',
+            testName: raw.testName || raw.test || raw.section || '',
+            score: typeof raw.score !== 'undefined' ? raw.score : (raw.marks || ''),
+            wpm: typeof raw.wpm !== 'undefined' ? raw.wpm : (raw.rawWpm || ''),
+            accuracy: raw.accuracy || '',
+            date
+          };
+        });
+        const header = ['id','student','testName','score','wpm','accuracy','date'];
+        const csv = [header.join(',')].concat(rows.map(r => header.map(h => `"${String(r[h]||'').replace(/"/g,'""')}"`).join(','))).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `test_results_export_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); link.remove();
+      } catch (e) { console.error('Export failed', e); alert('Export failed: see console'); }
+    });
+
+    // Prevent immediate bounce if admin.js hasn't set hooks yet (best-effort)
+    window.addEventListener('load', ()=> {
+      setTimeout(()=> {
+        if (typeof window.doFetchAndRender === 'function') window.doFetchAndRender('overview').catch(()=>{});
+        if (document.getElementById('adminStudentsTab') && !document.getElementById('adminStudentsTab').classList.contains('hidden')) {
+          if (window.adminFetchStudents) window.adminFetchStudents();
+        }
+      }, 400);
+    });
+  </script>
+  <style>
+  /* small spinner + overlay */
+  #globalLoader {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.35);
+    z-index: 9999;
+  }
+  #globalLoader .loaderBox {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    min-width: 220px;
+  }
+  .smallSpinner {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid #e6e6e6;
+    border-top-color: #2b7cff;
+    animation: spin 0.85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loaderText { font-weight:600; color:#333; }
+  /* optional tiny inline loading style for buttons */
+  .btn-loading { pointer-events:none; opacity:0.7; }
+  .btn .inline-spinner { margin-left:8px; vertical-align:middle; display:inline-block; width:12px; height:12px; border:2px solid #fff; border-top-color: rgba(255,255,255,0.7); border-radius:50%; animation:spin .75s linear infinite; }
+</style>
+
+<div id="globalLoader" aria-hidden="true">
+  <div class="loaderBox">
+    <div class="smallSpinner" aria-hidden="true"></div>
+    <div class="loaderText">Loading…</div>
+  </div>
+</div>
+<!-- GLOBAL LOADER -->
+<div id="global-loader" aria-hidden="true" role="status" aria-live="polite">
+  <div class="box">
+    <div class="loader-dot"></div>
+    <div class="loader-text">Loading…</div>
+  </div>
+</div>
+
+</body>
+</html>

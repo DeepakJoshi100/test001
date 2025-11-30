@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Testing Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p class="mt-4 text-white text-lg">Loading...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="page">
+        <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-md w-full space-y-8">
+                <div class="text-center">
+                    <div class="mx-auto h-20 w-20 bg-indigo-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-white text-3xl"></i>
+                    </div>
+                    <h2 class="mt-6 text-3xl font-extrabold text-gray-900">Student Testing Portal</h2>
+                    <p class="mt-2 text-sm text-gray-600">Sign in to access your tests and results</p>
+                </div>
+
+                <!-- Login Type Toggle -->
+                <div class="flex justify-center space-x-4 mb-6">
+                    <button id="studentLoginBtn" class="login-toggle active px-6 py-2 rounded-full font-medium transition-all">
+                        <i class="fas fa-user-graduate mr-2"></i>Student
+                    </button>
+                    <button id="adminLoginBtn" class="login-toggle px-6 py-2 rounded-full font-medium transition-all">
+                        <i class="fas fa-user-shield mr-2"></i>Admin
+                    </button>
+                </div>
+
+                <!-- Student Login Form -->
+                <form id="studentLoginForm" class="mt-8 space-y-6 login-form">
+                    <div class="rounded-md shadow-sm space-y-4">
+                        <div>
+                            <label for="studentUsername" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                            <input id="studentUsername" name="username" type="text" required 
+                                class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                                placeholder="Enter your username">
+                        </div>
+                        <div>
+                            <label for="studentDOB" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth (Password)</label>
+                            <input id="studentDOB" name="dob" type="date" required 
+                                class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm">
+                        </div>
+                    </div>
+                    <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Sign In as Student
+                    </button>
+                </form>
+
+                <!-- Admin Login Form -->
+                <form id="adminLoginForm" class="mt-8 space-y-6 login-form hidden">
+                    <div class="rounded-md shadow-sm space-y-4">
+                        <div>
+                            <label for="adminUsername" class="block text-sm font-medium text-gray-700 mb-1">Admin Username</label>
+                            <input id="adminUsername" name="username" type="text" required 
+                                class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                                placeholder="Enter admin username">
+                        </div>
+                        <div>
+                            <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input id="adminPassword" name="password" type="password" required 
+                                class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                                placeholder="Enter password">
+                        </div>
+                    </div>
+                    <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                        <i class="fas fa-shield-alt mr-2"></i>Sign In as Admin
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Dashboard -->
+    <div id="studentDashboard" class="page hidden">
+        <!-- Navigation -->
+        <nav class="bg-indigo-600 shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <i class="fas fa-graduation-cap text-white text-2xl mr-3"></i>
+                        <span class="text-white font-bold text-xl">Student Portal</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="welcomeUser" class="text-white"><i class="fas fa-user mr-2"></i>Welcome, Student</span>
+                        <button id="logoutBtn" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Dashboard Tabs -->
+            <div class="mb-6">
+                <nav class="flex space-x-4">
+                    <button class="dashboard-tab active px-4 py-2 rounded-lg font-medium" data-tab="overview">
+                        <i class="fas fa-chart-pie mr-2"></i>Overview
+                    </button>
+                    <button class="dashboard-tab px-4 py-2 rounded-lg font-medium" data-tab="tests">
+                        <i class="fas fa-file-alt mr-2"></i>Take Test
+                    </button>
+                    <button class="dashboard-tab px-4 py-2 rounded-lg font-medium" data-tab="typing">
+                        <i class="fas fa-keyboard mr-2"></i>Typing Test
+                    </button>
+                    <button class="dashboard-tab px-4 py-2 rounded-lg font-medium" data-tab="results">
+                        <i class="fas fa-history mr-2"></i>Results
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Overview Tab -->
+            <div id="overviewTab" class="tab-content">
+                <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total MCQ Tests -->
+    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+        <div class="flex items-center">
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm text-gray-500">MCQ Tests</p>
+                <p id="totalMcqTests" class="text-2xl font-bold text-gray-800">0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Average Score (all tests) -->
+    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-indigo-500">
+        <div class="flex items-center">
+            <div class="p-3 bg-indigo-100 rounded-full">
+                <i class="fas fa-percentage text-indigo-600 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm text-gray-500">Average Score</p>
+                <p id="avgScore" class="text-2xl font-bold text-gray-800">0%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best MCQ Score -->
+    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+        <div class="flex items-center">
+            <div class="p-3 bg-purple-100 rounded-full">
+                <i class="fas fa-trophy text-purple-600 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm text-gray-500">Best MCQ Score</p>
+                <p id="bestScore" class="text-2xl font-bold text-gray-800">0%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Typing Speeds -->
+    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex flex-col space-y-2">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-full">
+                    <i class="fas fa-keyboard text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-500">Best English Typing</p>
+                    <p id="bestEnglishWpm" class="text-xl font-bold text-gray-800">0 WPM</p>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-full">
+                    <i class="fas fa-keyboard text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm text-gray-500">Best Hindi Typing</p>
+                    <p id="bestHindiWpm" class="text-xl font-bold text-gray-800">0 WPM</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+                <!-- Recent Results -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4"><i class="fas fa-clock mr-2"></i>Recent Results</h3>
+                    <div id="recentResults" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentResultsBody" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No tests taken yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tests Tab -->
+            <div id="testsTab" class="tab-content hidden">
+                <h2 class="text-2xl font-bold mb-6"><i class="fas fa-file-alt mr-2"></i>MCQ Tests</h2>
+                
+                <!-- Test Categories -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Tally ERP 9 -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+                            <i class="fas fa-calculator text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Tally ERP 9</h3>
+                            <p class="text-gray-600 mb-4">Accounting, GST, TDS, Vouchers, Shortcuts & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-all" data-test="tally" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-lg transition-all" data-test="tally" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CCC -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 p-4">
+                            <i class="fas fa-desktop text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">CCC</h3>
+                            <p class="text-gray-600 mb-4">Computer Basics, MS Office, Internet, Email & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-all" data-test="ccc" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-green-700 hover:bg-green-800 text-white py-2 px-4 rounded-lg transition-all" data-test="ccc" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DCA -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-4">
+                            <i class="fas fa-laptop-code text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">DCA</h3>
+                            <p class="text-gray-600 mb-4">Advanced Office, Database, Networking & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-all" data-test="dca" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-purple-700 hover:bg-purple-800 text-white py-2 px-4 rounded-lg transition-all" data-test="dca" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Python -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4">
+                            <i class="fab fa-python text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Python</h3>
+                            <p class="text-gray-600 mb-4">Syntax, Functions, OOP, Data Structures & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg transition-all" data-test="python" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-yellow-700 hover:bg-yellow-800 text-white py-2 px-4 rounded-lg transition-all" data-test="python" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- C++ -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 p-4">
+                            <i class="fas fa-code text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">C++</h3>
+                            <p class="text-gray-600 mb-4">Pointers, OOP, STL, Memory Management & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-all" data-test="cpp" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-red-700 hover:bg-red-800 text-white py-2 px-4 rounded-lg transition-all" data-test="cpp" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- JavaScript -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-4">
+                            <i class="fab fa-js-square text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">JavaScript</h3>
+                            <p class="text-gray-600 mb-4">DOM, Events, ES6, Async, JSON & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-all" data-test="javascript" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 px-4 rounded-lg transition-all" data-test="javascript" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HTML -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-pink-500 to-pink-600 p-4">
+                            <i class="fab fa-html5 text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">HTML</h3>
+                            <p class="text-gray-600 mb-4">Tags, Forms, Semantic Elements, Attributes & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-pink-500 hover:bg-pink-600 text-white py-2 px-4 rounded-lg transition-all" data-test="html" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-pink-700 hover:bg-pink-800 text-white py-2 px-4 rounded-lg transition-all" data-test="html" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CSS -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 p-4">
+                            <i class="fab fa-css3-alt text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">CSS</h3>
+                            <p class="text-gray-600 mb-4">Selectors, Flexbox, Grid, Animations & more</p>
+                            <div class="flex space-x-2">
+                                <button class="start-test-btn flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded-lg transition-all" data-test="css" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-test-btn flex-1 bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-4 rounded-lg transition-all" data-test="css" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Tab -->
+            <div id="typingTab" class="tab-content hidden">
+                <h2 class="text-2xl font-bold mb-6"><i class="fas fa-keyboard mr-2"></i>Typing Tests</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- English Typing -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+                            <i class="fas fa-font text-white text-3xl"></i>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">English Typing</h3>
+                            <p class="text-gray-600 mb-4">Standard English paragraphs</p>
+                            <div class="flex space-x-2">
+                                <button class="start-typing-btn flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-all" data-lang="english" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-typing-btn flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-lg transition-all" data-lang="english" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hindi Unicode Typing -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-4">
+                            <span class="text-white text-2xl font-bold">हिं</span>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Hindi (Unicode/Mangal)</h3>
+                            <p class="text-gray-600 mb-4">हिंदी देवनागरी लिपि में टाइपिंग</p>
+                            <div class="flex space-x-2">
+                                <button class="start-typing-btn flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-all" data-lang="hindi" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-typing-btn flex-1 bg-orange-700 hover:bg-orange-800 text-white py-2 px-4 rounded-lg transition-all" data-lang="hindi" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kruti Dev Typing -->
+                    <div class="test-card bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 p-4">
+                            <span class="text-white text-2xl font-bold">कृ</span>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold mb-2">Kruti Dev</h3>
+                            <p class="text-gray-600 mb-4">Kruti Dev font encoding typing</p>
+                            <div class="flex space-x-2">
+                                <button class="start-typing-btn flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-all" data-lang="krutidev" data-mode="practice">
+                                    <i class="fas fa-dumbbell mr-1"></i>Practice
+                                </button>
+                                <button class="start-typing-btn flex-1 bg-green-700 hover:bg-green-800 text-white py-2 px-4 rounded-lg transition-all" data-lang="krutidev" data-mode="main">
+                                    <i class="fas fa-award mr-1"></i>Main Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div id="resultsTab" class="tab-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold"><i class="fas fa-history mr-2"></i>Test Results History</h2>
+                        <div class="flex space-x-2">
+                            <select id="resultFilter" class="border rounded-lg px-4 py-2">
+                                <option value="all">All Results</option>
+                                <option value="practice">Practice Only</option>
+                                <option value="main">Main Test Only</option>
+                                <option value="mcq">MCQ Only</option>
+                                <option value="typing">Typing Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">WPM</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Accuracy</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allResultsBody" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No results found</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCQ Test Page -->
+    <div id="mcqTestPage" class="page hidden">
+        <div class="min-h-screen bg-gray-100">
+            <!-- Test Header -->
+            <div class="bg-indigo-600 text-white py-4 px-6 fixed top-0 left-0 right-0 z-50 shadow-lg">
+                <div class="max-w-4xl mx-auto flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <span id="testNameHeader" class="font-bold text-lg">Test Name</span>
+                        <span id="testModeHeader" class="bg-indigo-500 px-3 py-1 rounded-full text-sm">Practice</span>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <div class="text-center">
+                            <span class="text-indigo-200 text-sm">Question</span>
+                            <p id="questionProgress" class="font-bold">1/10</p>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-indigo-200 text-sm">Answered</span>
+                            <p id="answeredCount" class="font-bold">0</p>
+                        </div>
+                        <button id="submitTestBtn" class="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg font-medium transition-all">
+                            <i class="fas fa-check mr-2"></i>Submit
+                        </button>
+                        <button id="exitTestBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="fixed top-16 left-0 right-0 h-1 bg-indigo-200 z-40">
+                <div id="progressBar" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="pt-24 pb-24 px-4">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-lg p-8">
+                        <div id="questionContainer">
+                            <div class="mb-6">
+                                <span id="questionNumber" class="text-indigo-600 font-semibold">Question 1</span>
+                            </div>
+                            <h2 id="questionText" class="text-xl font-medium mb-6 text-gray-800">Question text goes here?</h2>
+                            <div id="optionsContainer" class="space-y-3">
+                                <!-- Options will be generated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Footer -->
+            <div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg py-4 px-6 z-50">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex justify-between items-center">
+                        <button id="prevQuestionBtn" class="bg-gray-200 hover:bg-gray-300 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50" disabled>
+                            <i class="fas fa-chevron-left mr-2"></i>Previous
+                        </button>
+                        
+                        <!-- Question Navigator -->
+                        <div id="questionNavigator" class="flex flex-wrap justify-center gap-2 max-w-xl overflow-auto py-2">
+                            <!-- Question buttons will be generated here -->
+                        </div>
+
+                        <button id="nextQuestionBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
+                            Next<i class="fas fa-chevron-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practice Mode Selection Modal -->
+    <div id="practiceModal" class="modal hidden">
+        <div class="modal-content bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 class="text-2xl font-bold mb-6 text-center"><i class="fas fa-cog mr-2"></i>Practice Mode Settings</h3>
+            <div class="space-y-4">
+                <p class="text-gray-600 text-center">Select number of questions:</p>
+                <div class="grid grid-cols-3 gap-4">
+                    <button class="question-count-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-lg font-bold text-xl transition-all" data-count="10">10</button>
+                    <button class="question-count-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-lg font-bold text-xl transition-all" data-count="25">25</button>
+                    <button class="question-count-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-lg font-bold text-xl transition-all" data-count="50">50</button>
+                </div>
+            </div>
+            <button id="closePracticeModal" class="mt-6 w-full bg-gray-200 hover:bg-gray-300 py-3 rounded-lg font-medium transition-all">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Typing Practice Modal -->
+    <div id="typingPracticeModal" class="modal hidden">
+        <div class="modal-content bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 class="text-2xl font-bold mb-6 text-center"><i class="fas fa-clock mr-2"></i>Select Duration</h3>
+            <div class="space-y-4">
+                <p class="text-gray-600 text-center">Choose your practice time:</p>
+                <div class="grid grid-cols-3 gap-4">
+                    <button class="duration-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-lg font-bold transition-all" data-duration="5">5 min</button>
+                    <button class="duration-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-lg font-bold transition-all" data-duration="10">10 min</button>
+                    <button class="duration-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-lg font-bold transition-all" data-duration="20">20 min</button>
+                </div>
+            </div>
+            <button id="closeTypingModal" class="mt-6 w-full bg-gray-200 hover:bg-gray-300 py-3 rounded-lg font-medium transition-all">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Typing Test Page -->
+    <div id="typingTestPage" class="page hidden">
+        <div class="min-h-screen bg-gray-100">
+            <!-- Typing Test Header -->
+            <div class="bg-green-600 text-white py-4 px-6 fixed top-0 left-0 right-0 z-50 shadow-lg">
+                <div class="max-w-4xl mx-auto flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <span id="typingTestName" class="font-bold text-lg">English Typing</span>
+                        <span id="typingTestMode" class="bg-green-500 px-3 py-1 rounded-full text-sm">Practice</span>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <div class="text-center">
+                            <span class="text-green-200 text-sm">Time Left</span>
+                            <p id="typingTimer" class="font-bold text-2xl">10:00</p>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-green-200 text-sm">WPM</span>
+                            <p id="liveWPM" class="font-bold">0</p>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-green-200 text-sm">Accuracy</span>
+                            <p id="liveAccuracy" class="font-bold">100%</p>
+                        </div>
+                        <button id="submitTypingBtn" class="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg font-medium transition-all">
+                            <i class="fas fa-check mr-2"></i>Submit
+                        </button>
+                        <button id="exitTypingBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Area -->
+            <div class="pt-24 pb-8 px-4">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Stats Bar -->
+                    <div class="bg-white rounded-xl shadow-md p-4 mb-6 grid grid-cols-5 gap-4 text-center">
+                        <div>
+                            <p class="text-gray-500 text-sm">Characters</p>
+                            <p id="totalChars" class="font-bold text-lg">0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Correct</p>
+                            <p id="correctChars" class="font-bold text-lg text-green-600">0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Errors</p>
+                            <p id="errorChars" class="font-bold text-lg text-red-600">0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Words</p>
+                            <p id="wordCount" class="font-bold text-lg">0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">Progress</p>
+                            <p id="typingProgress" class="font-bold text-lg">0%</p>
+                        </div>
+                    </div>
+
+                    <!-- Text Display -->
+                    <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+                        <div id="textDisplay" class="text-xl leading-relaxed font-mono typing-text" style="min-height: 200px;">
+                            <!-- Text with highlighting will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Type here:</label>
+                        <textarea id="typingInput" class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none text-lg font-mono resize-none" rows="4" placeholder="Start typing when ready..." autofocus></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Summary Page (hidden by default) -->
+<div id="mcqSummaryPage" class="hidden page p-4 max-w-4xl mx-auto">
+  <div class="summary-header mb-4">
+    <h2 id="summaryTitle" class="text-xl font-bold">Test Summary</h2>
+    <div class="mt-2">
+      <span>Total: <strong id="summaryTotal">0</strong></span>
+      <span class="ml-4">Correct: <strong id="summaryCorrect">0</strong></span>
+      <span class="ml-4">Wrong: <strong id="summaryWrong">0</strong></span>
+      <span class="ml-4">Score: <strong id="summaryScore">0%</strong></span>
+    </div>
+    <div class="mt-3">
+      <button id="closeSummaryBtn" class="btn">Close Summary</button>
+    </div>
+  </div>
+
+  <div id="summaryList" class="space-y-4"></div>
+</div>
+
+    <!-- Test Result Modal -->
+    <div id="resultModal" class="modal hidden">
+        <div class="modal-content bg-white rounded-xl shadow-2xl p-8 max-w-lg w-full mx-4">
+            <div class="text-center">
+                <div id="resultIcon" class="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center bg-green-100">
+                    <i class="fas fa-check-circle text-green-500 text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-2">Test Completed!</h3>
+                <p id="resultTestName" class="text-gray-600 mb-6">Python - Practice Test</p>
+                
+                <div id="mcqResults" class="space-y-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Questions</p>
+                                <p id="resultTotalQ" class="font-bold text-xl">10</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Correct Answers</p>
+                                <p id="resultCorrect" class="font-bold text-xl text-green-600">8</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Wrong Answers</p>
+                                <p id="resultWrong" class="font-bold text-xl text-red-600">2</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Score</p>
+                                <p id="resultScore" class="font-bold text-xl text-indigo-600">80%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="typingResults" class="space-y-4 hidden">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-gray-500 text-sm">WPM</p>
+                                <p id="resultWPM" class="font-bold text-xl text-indigo-600">45</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Accuracy</p>
+                                <p id="resultAccuracy" class="font-bold text-xl text-green-600">95%</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Characters</p>
+                                <p id="resultChars" class="font-bold text-xl">225</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Errors</p>
+                                <p id="resultErrors" class="font-bold text-xl text-red-600">12</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="closeResultModal" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="page hidden">
+        <!-- Admin Navigation -->
+        <nav class="bg-red-600 shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <i class="fas fa-shield-alt text-white text-2xl mr-3"></i>
+                        <span class="text-white font-bold text-xl">Admin Portal</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-white"><i class="fas fa-user-shield mr-2"></i>Administrator</span>
+                        <button id="adminLogoutBtn" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Admin Tabs -->
+            <div class="mb-6">
+                <nav class="flex space-x-4">
+                    <button class="admin-tab active px-4 py-2 rounded-lg font-medium" data-tab="adminOverview">
+                        <i class="fas fa-chart-line mr-2"></i>Dashboard
+                    </button>
+                    <button class="admin-tab px-4 py-2 rounded-lg font-medium" data-tab="manageStudents">
+                        <i class="fas fa-users mr-2"></i>Students
+                    </button>
+                    <button class="admin-tab px-4 py-2 rounded-lg font-medium" data-tab="allResults">
+                        <i class="fas fa-clipboard-list mr-2"></i>Results
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Admin Overview Tab -->
+            <div id="adminOverviewTab" class="admin-tab-content">
+                <!-- Admin Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-100 rounded-full">
+                                <i class="fas fa-users text-blue-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Total Students</p>
+                                <p id="adminTotalStudents" class="text-2xl font-bold text-gray-800">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-100 rounded-full">
+                                <i class="fas fa-file-alt text-green-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Total Tests Taken</p>
+                                <p id="adminTotalTests" class="text-2xl font-bold text-gray-800">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-100 rounded-full">
+                                <i class="fas fa-percentage text-yellow-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Average Score</p>
+                                <p id="adminAvgScore" class="text-2xl font-bold text-gray-800">0%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-purple-100 rounded-full">
+                                <i class="fas fa-calendar-day text-purple-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-500">Tests Today</p>
+                                <p id="adminTestsToday" class="text-2xl font-bold text-gray-800">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4"><i class="fas fa-clock mr-2"></i>Recent Activity</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminRecentActivity" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No recent activity</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+<div class="flex justify-between items-center mb-6">
+    <h3 class="text-lg font-semibold"><i class="fas fa-users mr-2"></i>Student Management</h3>
+    <div class="flex space-x-4">
+        <input type="text" id="searchStudent" placeholder="Search students..." class="border rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-500">
+        
+        <!-- 💥 HARD-FIX: Always visible, always functional Add Student button -->
+        <button 
+            id="addStudentBtn" 
+            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg transform hover:scale-105 transition-all duration-200 z-10"
+            style="display: inline-block !important; visibility: visible !important; opacity: 1 !important; position: relative;"
+            onclick="event.preventDefault(); if(window.adminPortal && typeof window.adminPortal.showAddStudentModal === 'function') { window.adminPortal.showAddStudentModal(); } else { alert('Admin system still loading. Please wait 2 seconds and try again.'); console.error('AdminPortal:', window.adminPortal); }"
+        >
+            <i class="fas fa-plus mr-2"></i>Add Student
+        </button>
+    </div>
+</div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">DOB</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tests</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="8" class="px-6 py-4 text-center text-gray-500">No students found</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Results Tab -->
+            <div id="allResultsTab" class="admin-tab-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold"><i class="fas fa-clipboard-list mr-2"></i>All Test Results</h3>
+                        <div class="flex space-x-4">
+                            <select id="adminFilterStudent" class="border rounded-lg px-4 py-2">
+                                <option value="">All Students</option>
+                            </select>
+                            <select id="adminFilterTest" class="border rounded-lg px-4 py-2">
+                                <option value="">All Tests</option>
+                                <option value="tally">Tally ERP 9</option>
+                                <option value="ccc">CCC</option>
+                                <option value="dca">DCA</option>
+                                <option value="python">Python</option>
+                                <option value="cpp">C++</option>
+                                <option value="javascript">JavaScript</option>
+                                <option value="html">HTML</option>
+                                <option value="css">CSS</option>
+                                <option value="english">English Typing</option>
+                                <option value="hindi">Hindi Typing</option>
+                                <option value="krutidev">Kruti Dev Typing</option>
+                            </select>
+                            <select id="adminFilterMode" class="border rounded-lg px-4 py-2">
+                                <option value="">All Modes</option>
+                                <option value="practice">Practice</option>
+                                <option value="main">Main Test</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">WPM</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminResultsBody" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="8" class="px-6 py-4 text-center text-gray-500">No results found</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Student Modal -->
+    <div id="studentModal" class="modal hidden">
+        <div class="modal-content bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 id="studentModalTitle" class="text-2xl font-bold mb-6"><i class="fas fa-user-plus mr-2"></i>Add Student</h3>
+            <form id="studentForm" class="space-y-4">
+                <input type="hidden" id="editStudentId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="studentName" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="studentUsernameInput" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                    <input type="date" id="studentDOBInput" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="studentEmail" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex space-x-4 pt-4">
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium transition-all">
+                        <i class="fas fa-save mr-2"></i>Save
+                    </button>
+                    <button type="button" id="closeStudentModal" class="flex-1 bg-gray-200 hover:bg-gray-300 py-3 rounded-lg font-medium transition-all">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Confirm Delete</h3>
+                <p id="confirmMessage" class="text-gray-600 mb-6">Are you sure you want to delete this item?</p>
+                <div class="flex space-x-4">
+                    <button id="confirmDeleteBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition-all">
+                        <i class="fas fa-trash mr-2"></i>Delete
+                    </button>
+                    <button id="cancelDeleteBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 py-3 rounded-lg font-medium transition-all">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+    
+    <!-- App Scripts -->
+<script src="js/firebase-config.js"></script>
+<script src="js/questions.js"></script>
+<script src="js/typing-content.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/mcq-test.js"></script>
+<script src="js/typing-test.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/app.js"></script> <!-- Should appear ONLY ONCE -->
+<!-- GLOBAL LOADER -->
+<div id="global-loader" aria-hidden="true" role="status" aria-live="polite">
+  <div class="box">
+    <div class="loader-dot"></div>
+    <div class="loader-text">Loading…</div>
+  </div>
+</div>
+
+</body>
+</html>

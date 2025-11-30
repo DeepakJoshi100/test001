@@ -1,0 +1,419 @@
+/* css/styles.css
+   Clean blue & white theme — primary readable text is BLACK (#000)
+   Decorative accents use blue tones. Designed for the app's existing HTML structure.
+*/
+
+/* ---------- Variables ---------- */
+:root{
+  --bg-1: #f6fbff;           /* pale blue page bg */
+  --bg-2: #e9f3ff;           /* slightly darker pale */
+  --card-bg: #ffffff;        /* white cards */
+  --panel-bg: #f7fbff;       /* light panel */
+  --border: #e1eefc;         /* soft blue border */
+  --muted: #5b6b7a;          /* muted text (dark slate) */
+  --accent: #1e6fff;         /* primary blue accent */
+  --accent-2: #2aa0ff;       /* secondary blue */
+  --danger: #ff5b5b;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --glass-shadow: 0 8px 30px rgba(18,35,75,0.06);
+  /* FIXED: valid cubic-bezier decimals */
+  --ease: cubic-bezier(.16,.84,.44,1);
+  --text-dark: #000000;     /* primary readable text = BLACK */
+  --text-light: #ffffff;
+}
+
+/* ---------- Base ---------- */
+html,body {
+  height:100%;
+  margin:0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg,var(--bg-1), var(--bg-2));
+  color: var(--text-dark);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height:1.45;
+}
+/* global-loader.css (include into your main CSS) */
+#global-loader {
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0; */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  z-index: 9999;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+body.loading #global-loader {
+  display: flex;          /* show when body has .loading */
+}
+
+#global-loader .loader-box{
+  background: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  min-width: 200px;
+}
+
+/* spinner */
+.loader-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 3px solid #e6e6e6;
+  border-top-color: #2b7cff;
+  animation: glspin .8s linear infinite;
+}
+@keyframes glspin { to { transform: rotate(360deg); } }
+
+/* loader text */
+.loader-text { font-weight:600; color:#222; }
+
+/* optional: small button spinner using only CSS (add class .loading-btn on the button) */
+button.loading-btn {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.9;
+}
+button.loading-btn::after{
+  content: "";
+  display:inline-block;
+  width:12px; height:12px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,0.9);
+  border-top-color: rgba(255,255,255,0.35);
+  position: absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  animation: glspin .8s linear infinite;
+}
+
+
+/* container */
+.container-max { max-width:1180px; margin:0 auto; padding:1.25rem; }
+
+/* ---------- App Nav ---------- */
+.app-nav {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  padding:.8rem 1rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--glass-shadow);
+}
+.brand { display:flex; align-items:center; gap:.75rem; }
+.brand .logo {
+  width:46px;height:46px;border-radius:10px;
+  background: linear-gradient(135deg,var(--accent),var(--accent-2));
+  display:flex;align-items:center;justify-content:center;color:var(--text-light);
+  font-weight:700;
+  box-shadow: 0 6px 18px rgba(30,111,255,0.12);
+}
+.nav-links { display:flex; gap:.5rem; align-items:center; }
+
+/* ---------- Glass / Card (white panels) ---------- */
+.glass {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding:1rem;
+  box-shadow: var(--glass-shadow);
+  transition: transform .22s var(--ease), box-shadow .22s var(--ease);
+  color: var(--text-dark);
+}
+.glass:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(18,35,75,0.08); }
+
+/* card accent (strip) */
+.card-accent::before {
+  content:""; position:absolute; left:0; top:0; width:6px; height:100%; background: linear-gradient(180deg,var(--accent),var(--accent-2)); border-top-left-radius:var(--radius-lg); border-bottom-left-radius:var(--radius-lg);
+}
+
+/* ---------- Headings ---------- */
+.h1-future {
+  font-weight:700; color:var(--text-dark);
+  font-size: clamp(1.4rem, 2.2vw, 2.2rem);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.55rem .85rem; border-radius:10px; font-weight:600; cursor:pointer; border:none;
+  transition: transform .16s var(--ease), box-shadow .16s var(--ease);
+}
+.btn-primary {
+  background: linear-gradient(90deg,var(--accent), var(--accent-2));
+  color: var(--text-light);
+  box-shadow: 0 8px 30px rgba(30,111,255,0.12);
+}
+.btn-primary:hover { transform: translateY(-3px); filter:brightness(1.03); }
+.btn-ghost {
+  background: transparent; color: var(--text-dark); border:1px solid var(--border);
+}
+.btn-danger { background: var(--danger); color:var(--text-light); }
+
+/* small button */
+.btn-sm { padding:.4rem .6rem; border-radius:8px; font-size:.9rem; }
+
+/* ---------- Modal ---------- */
+.modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:60; padding:1rem; background: rgba(8,16,40,0.4); }
+.modal .modal-content { width:100%; max-width:620px; border-radius:12px; overflow:hidden; box-shadow: 0 30px 80px rgba(10,20,60,0.12); background:var(--panel-bg); border:1px solid var(--border); }
+.modal.hidden { display:none; }
+
+/* ---------- Toast ---------- */
+.toast { position:fixed; right:20px; bottom:20px; min-width:220px; padding:.7rem 1rem; border-radius:10px; font-weight:700; z-index:1000; display:flex; align-items:center; gap:.6rem; }
+.toast.info { background: linear-gradient(90deg,var(--accent-2), var(--accent)); color: var(--text-light); }
+.toast.success { background: #e6fff5; color: var(--text-dark); border:1px solid #d1f0e6; }
+.toast.error { background: #ffecec; color: var(--text-dark); border:1px solid #ffd6d6; }
+
+/* hide */
+.toast.hidden { opacity:0; transform: translateY(8px) scale(.98); pointer-events:none }
+
+/* ---------- Forms / Inputs ---------- */
+.input {
+  width:100%;
+  padding:.6rem .8rem;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-dark);
+  outline:none;
+  transition: box-shadow .14s var(--ease), transform .14s var(--ease);
+}
+.input:focus { box-shadow: 0 10px 30px rgba(30,111,255,0.06); transform: translateY(-2px); border-color: var(--accent); }
+
+/* if you want dark text on an explicitly white region this is default (keeps black) */
+.input-dark-text { color: var(--text-dark); background: #ffffff; }
+
+/* ---------- Tables ---------- */
+.table { width:100%; border-collapse: collapse; color: var(--text-dark); }
+.table th { text-transform:uppercase; font-size:12px; letter-spacing:0.04em; color:var(--muted); padding:.7rem; }
+.table td { padding:.8rem; border-bottom: 1px solid var(--border); }
+
+/* ---------- Typing test highlighting ---------- */
+.typing-text { font-family: "Inter", monospace; font-size:1.05rem; line-height:1.8; color: var(--text-dark); }
+.typing-text .correct-char { color: var(--text-dark); background: rgba(42,160,255,0.12); padding:0 2px; border-radius:3px; }
+.typing-text .error-char { color: var(--text-dark); background: rgba(255,90,90,0.12); padding:0 2px; border-radius:3px; }
+.typing-text .current-pos { color: var(--text-light); background: var(--accent); padding:0 2px; border-radius:3px; }
+
+/* ---------- Progress bar ---------- */
+.progress-track { background: #f1f7ff; height:10px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.progress-fill { height:100%; background: linear-gradient(90deg,var(--accent),var(--accent-2)); transition: width .35s var(--ease); }
+
+/* ---------- Small utilities ---------- */
+.kicker { color: var(--muted); font-weight:600; font-size:.95rem; }
+.muted { color: var(--muted); }
+.small { font-size:.9rem; color: var(--muted); }
+
+/* ---------- Responsive ---------- */
+@media (max-width:900px) {
+  .brand .logo { width:40px; height:40px; }
+  .glass { padding:.9rem; border-radius:10px; }
+  .h1-future { font-size:1.3rem; }
+}
+
+/* focus */
+:focus { outline: 3px solid rgba(30,111,255,0.12); outline-offset:3px; border-radius:6px; }
+/* disabled */
+/* Typing test styles */
+.typing-wrapper {
+  max-width: 900px;
+  margin: 1rem auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+}
+
+#typingContainer {
+  width: 100%;
+  min-height: 160px;
+  max-height: 320px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  overflow: auto;               /* scroll when content grows */
+  white-space: pre-wrap;        /* preserve spaces and newlines */
+  word-break: break-word;       /* break long words to avoid overflow */
+  line-height: 1.6;
+  font-size: 18px;
+  position: relative;
+}
+
+/* each character is a span */
+.char {
+  display: inline-block;
+  padding: 0 1px;
+  margin: 0;
+  box-sizing: border-box;
+  min-width: 0.55ch; /* helps keep monospace alignment */
+}
+
+/* correct & wrong background highlights only */
+.char.correct {
+  background: #dff7df;   /* light green */
+  color: #0b6b0b;
+}
+
+.char.wrong {
+  background: #ffdede;   /* light red */
+  color: #8b0000;
+}
+
+/* the active character shows cursor by left border animation */
+.char.current {
+  position: relative;
+  border-left: 2px solid #1976d2;
+  animation: typing-caret 1s steps(1) infinite;
+}
+
+/* caret blink */
+@keyframes typing-caret {
+  0% { border-left-color: transparent; }
+  50% { border-left-color: #1976d2; }
+  100% { border-left-color: transparent; }
+}
+
+/* subtle fading for chars already typed (optional) */
+.char.typed { opacity: 0.98; }
+
+/* controls area */
+.typing-controls { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:10px; flex-wrap:wrap; }
+.btn { padding:.4rem .7rem; border-radius:6px; border:1px solid #ddd; background:#f7f7f7; cursor:pointer; }
+.result-box { margin-top:12px; padding:10px; border-radius:6px; background:#fafafa; border:1px solid #eee; font-size:14px; color:#333; }
+
+/* hidden textarea used for capturing input */
+#hiddenInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+}
+
+/* Responsive tweak */
+@media (max-width:600px) {
+  #typingContainer { font-size:16px; min-height:140px; max-height:260px; }
+}
+#typingContainer {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+
+  /* THE IMPORTANT PROPERTIES: */
+  white-space: pre-wrap;        /* preserves spaces & newlines + wraps normally */
+  word-break: break-word;       /* long words break to next line */
+  overflow-wrap: break-word;    /* ensures extremely long words wrap */
+  
+  line-height: 1.6;
+  font-size: 18px;
+  font-family: monospace;
+
+  background: #f8f8f8;
+  max-height: 350px;
+  overflow-y: auto;             /* allow scrolling for long passages */
+}
+
+/* characters are inline-block but wrapping stays intact */
+#typingContainer .char {
+  display: inline-block;
+  min-width: 0.55ch;            /* keeps alignment stable */
+  padding: 0 1px;
+  margin: 0;
+}
+/* Typing display: only highlight, no spacing, wrap & auto-scroll */
+#textDisplay,
+.typing-text {
+  white-space: pre-wrap !important;      /* preserve spaces & newlines, allow wrapping */
+  overflow-wrap: break-word !important;  /* ensure long words wrap within box */
+  word-break: break-word !important;
+  max-width: 100%;
+  overflow-x: hidden;                    /* prevent horizontal scrollbar */
+  overflow-y: auto;                      /* vertical scroll when content grows */
+}
+
+/* per-character spans: inline so no extra spacing added */
+#textDisplay span,
+.typing-text span {
+  display: inline !important;   /* inline prevents layout shifts and extra gaps */
+  padding: 0 !important;        /* NO padding to avoid spacing changes */
+  margin: 0 !important;
+  box-sizing: border-box;
+  line-height: 1.6;
+  white-space: pre-wrap;        /* ensure spaces/newlines preserved inside spans */
+}
+
+/* Highlight styles only change background (no padding) */
+.typing-text .correct-char,
+#textDisplay .correct-char {
+  background: rgba(42,160,255,0.12);
+  color: inherit;
+  border-radius: 2px;
+}
+
+.typing-text .error-char,
+#textDisplay .error-char {
+  background: rgba(255,90,90,0.12);
+  color: inherit;
+  border-radius: 2px;
+}
+
+/* current position highlight (solid accent but no layout impact) */
+.typing-text .current-pos,
+#textDisplay .current-pos {
+  background: var(--accent);
+  color: var(--text-light);
+  border-radius: 2px;
+}
+
+/* Prevent any earlier rules that made spans inline-block */
+#textDisplay .char,
+#textDisplay .current,
+#textDisplay .correct-char,
+#textDisplay .error-char {
+  display: inline !important;
+  padding: 0 !important;
+}
+
+/* Container height: adjust as needed (keeps box size controlled) */
+#textDisplay {
+  max-height: 320px;       /* adjust to your layout */
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+/* MCQ option states */
+.options-container .option {
+  transition: background-color .15s, border-color .15s;
+}
+.options-container .option.selected {
+  outline: 2px solid rgba(0,0,0,0.08);
+  background-color: rgba(59,130,246,0.06); /* faint blue */
+}
+.options-container .option.correct {
+  background-color: rgba(16,185,129,0.12); /* faint green */
+  border-color: rgba(16,185,129,0.35);
+}
+.options-container .option.wrong {
+  background-color: rgba(239,68,68,0.08); /* faint red */
+  border-color: rgba(239,68,68,0.35);
+}
+.options-container .option .marker {
+  margin-left: 0.75rem;
+  font-weight: 600;
+}
+/* summary page styles */
+#mcqSummaryPage .question-card { border:1px solid #e5e7eb; padding:12px; border-radius:8px; }
+#mcqSummaryPage .option { padding:8px; border-radius:6px; margin-top:6px; display:flex; justify-content:space-between; align-items:center; }
+#mcqSummaryPage .option.correct { background: rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); }
+#mcqSummaryPage .option.wrong { background: rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.12); }
+#mcqSummaryPage .option.picked { box-shadow: inset 0 0 0 2px rgba(59,130,246,0.06); }
+#mcqSummaryPage .marker { font-weight:700; margin-left:10px; }
+#mcqSummaryPage .question-meta { font-size:.9rem; color:#6b7280; margin-top:6px; }
