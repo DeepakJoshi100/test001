@@ -1,44 +1,44 @@
 // js/dashboard.js
 /**
- * Student Dashboard (Full)
- * - Displays overview cards (total MCQ tests, avg score, best MCQ, best English/Hindi WPM)
- * - Loads student profile and results from Firestore
- * - Recomputes language-specific best WPM from 'test_results' and updates student doc if improved
- * - Robust DOM guards and defensive Firebase initialization
+ * Student Dashboard (Full, corrected + solid charts)
+ * - Loads student profile & results from Firestore
+ * - Updates overview cards
+ * - Renders solid Typing (WPM & Accuracy) and MCQ (Marks) trend charts
  *
- * Expected DOM IDs (add to your HTML if missing):
- * - studentDashboard, welcomeUser, logoutBtn
+ * Requirements:
+ * - Chart.js must be loaded before this file
+ * - Firebase should be initialized elsewhere (initFirebase / firebase global)
+ *
+ * DOM IDs used:
+ * - logoutBtn, welcomeUser
  * - totalMcqTests, avgScore, totalTypingTests, bestScore, bestEnglishWpm, bestHindiWpm
- * - recentResultsBody, allResultsBody, resultFilter (select), testsTab, overviewTab, typingTab, resultsTab (for tab switching)
- *
- * The dashboard listens for a CustomEvent('refreshDashboard', { detail: { studentId } })
- * to reload student data (used after submitting tests).
+ * - recentResultsBody, allResultsBody, resultFilter
+ * - typingTrendChart, mcqTrendChart
  */
+
+function _$(id) { return document.getElementById(id) || null; }
 
 class StudentDashboard {
     constructor() {
         this.studentId = null;
         this.studentName = null;
         this.studentUsername = null;
-        this.testResults = []; // cached results for the student (most recent first)
+        this.testResults = [];
+        this._charts = {};
 
-        // safe DOM getter
         const getEl = id => document.getElementById(id) || null;
 
-        // Elements used by the dashboard
         this.elements = {
             dashboard: getEl('studentDashboard'),
             welcomeUser: getEl('welcomeUser'),
             logoutBtn: getEl('logoutBtn'),
 
-            // tabs
             dashboardTabs: document.querySelectorAll('.dashboard-tab') || [],
             overviewTab: getEl('overviewTab'),
             testsTab: getEl('testsTab'),
             typingTab: getEl('typingTab'),
             resultsTab: getEl('resultsTab'),
 
-            // overview cards
             totalMcqTests: getEl('totalMcqTests'),
             avgScore: getEl('avgScore'),
             totalTypingTests: getEl('totalTypingTests'),
@@ -46,7 +46,6 @@ class StudentDashboard {
             bestEnglishWpm: getEl('bestEnglishWpm'),
             bestHindiWpm: getEl('bestHindiWpm'),
 
-            // results tables
             recentResultsBody: getEl('recentResultsBody'),
             allResultsBody: getEl('allResultsBody'),
             resultFilter: getEl('resultFilter')
@@ -56,7 +55,6 @@ class StudentDashboard {
     }
 
     bindEvents() {
-        // Tab switching (if you have .dashboard-tab elements)
         if (this.elements.dashboardTabs && this.elements.dashboardTabs.length) {
             this.elements.dashboardTabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
@@ -74,25 +72,16 @@ class StudentDashboard {
             this.elements.resultFilter.addEventListener('change', () => this.filterAndDisplayResults());
         }
 
-        // Listen for external refresh requests (e.g., after a test finishes)
         document.addEventListener('refreshDashboard', (e) => {
             const id = e && e.detail && e.detail.studentId ? e.detail.studentId : null;
             if (id && id === this.studentId) {
-                // reload results for the same student
                 this.loadTestResults(id).catch(err => console.warn('refreshDashboard load error', err));
             } else if (!id && this.studentId) {
-                // generic refresh
                 this.loadTestResults(this.studentId).catch(err => console.warn('refreshDashboard load error', err));
             }
         });
     }
 
-    /**
-     * Initialize dashboard for a student
-     * @param {string} studentId
-     * @param {string} studentName
-     * @param {string} username
-     */
     async init(studentId, studentName = '', username = '') {
         try {
             if (!studentId) {
@@ -103,25 +92,18 @@ class StudentDashboard {
             this.studentName = studentName;
             this.studentUsername = username;
 
-            // show loading overlay if app has showLoading
             if (window.app && typeof window.app.showLoading === 'function') window.app.showLoading(true);
 
-            // Ensure Firebase
             if (!window.firebaseInitialized) {
                 if (typeof initFirebase === 'function') await initFirebase();
             }
 
-            // Load profile (creates minimal profile if missing)
             await this.loadStudentProfile(studentId);
-
-            // Load results
             await this.loadTestResults(studentId);
 
-            // Show dashboard UI
             document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
             if (this.elements.dashboard) this.elements.dashboard.classList.remove('hidden');
 
-            // Switch to overview by default
             this.switchTab('overview');
 
             if (window.app && typeof window.app.showLoading === 'function') window.app.showLoading(false);
@@ -132,17 +114,20 @@ class StudentDashboard {
         }
     }
 
-    /**
-     * Load or create student profile
-     */
     async loadStudentProfile(studentId) {
         try {
+            if (!window.firebase || !firebase.firestore) {
+                // If Firebase not available, still allow the UI to show defaults
+                console.warn('Firebase not available – profile load skipped');
+                this.updateStats({});
+                return;
+            }
+
             const db = firebase.firestore();
             const ref = db.collection('students').doc(studentId);
             const doc = await ref.get();
 
             if (!doc.exists) {
-                // create a minimal profile
                 await ref.set({
                     id: studentId,
                     name: this.studentName || '',
@@ -159,14 +144,12 @@ class StudentDashboard {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     lastTestDate: null
                 });
-                // no data to update UI yet
                 this.updateStats({});
             } else {
                 const data = doc.data() || {};
                 this.updateStats(data);
             }
 
-            // show welcome
             if (this.elements.welcomeUser) {
                 const displayName = this.studentName || (doc && doc.data && doc.data().name) || 'Student';
                 this.elements.welcomeUser.innerHTML = `<i class="fas fa-user mr-2"></i>Welcome, ${displayName}`;
@@ -177,252 +160,156 @@ class StudentDashboard {
         }
     }
 
-    /**
-     * Load student's test results from Firestore
-     * Attempts a where('studentId','==', studentId).orderBy('date','desc')
-     * Falls back to client-side filter if Firestore requires composite index
-     */
+    updateStats(data = {}) {
+        try {
+            const totalMcqTests = data.mcqTestsTaken ?? data.totalMcqTests ?? data.testsTaken ?? 0;
+            const totalTypingTests = data.typingTestsTaken ?? data.totalTypingTests ?? 0;
+            const avgScore = (data.averageScore ?? data.avgScore ?? data.average ?? 0);
+            const bestScore = data.bestScore ?? data.bestMcqScore ?? data.best ?? 0;
+            const bestEnglishWpm = data.bestTypingWpmEnglish ?? data.bestTypingWpm ?? 0;
+            const bestHindiWpm = data.bestTypingWpmHindi ?? 0;
+
+            if (this.elements.totalMcqTests) this.elements.totalMcqTests.textContent = totalMcqTests;
+            if (this.elements.avgScore) this.elements.avgScore.textContent = (avgScore !== null ? (avgScore + '%') : '-');
+            if (this.elements.totalTypingTests) this.elements.totalTypingTests.textContent = totalTypingTests;
+            if (this.elements.bestScore) this.elements.bestScore.textContent = (bestScore !== null ? (bestScore + '%') : '-');
+            if (this.elements.bestEnglishWpm) this.elements.bestEnglishWpm.textContent = (bestEnglishWpm || '-');
+            if (this.elements.bestHindiWpm) this.elements.bestHindiWpm.textContent = (bestHindiWpm || '-');
+
+            const displayName = data.name || this.studentName || this.studentUsername || 'Student';
+            if (this.elements.welcomeUser) this.elements.welcomeUser.innerHTML = `<i class="fas fa-user mr-2"></i>Welcome, ${displayName}`;
+
+        } catch (e) {
+            console.warn('updateStats error', e);
+        }
+    }
+
     async loadTestResults(studentId) {
         try {
-            if (!studentId) return;
+            if (!studentId) throw new Error('studentId required');
 
-            const db = firebase.firestore();
-            let snapshot;
-
-            try {
-                snapshot = await db.collection('test_results')
-                    .where('studentId', '==', studentId)
-                    .orderBy('date', 'desc')
-                    .get();
-            } catch (err) {
-                // fallback - get recent results and filter client-side
-                console.warn('Query fallback: fetching limited results and filtering client-side', err);
-                snapshot = await db.collection('test_results').orderBy('date', 'desc').limit(1000).get();
+            if (!window.firebase || !firebase.firestore) {
+                console.warn('Firebase not available – test results load skipped');
+                this.testResults = [];
+                this.recomputeSummaryStats();
+                this.displayRecentResults();
+                this.displayAllResults();
+                this.initTrendCharts();
+                return this.testResults;
             }
 
+            const db = firebase.firestore();
+            const col = db.collection('test_results');
+            const q = col.where('studentId', '==', studentId).orderBy('date', 'asc');
+            const snap = await q.get();
+
             const results = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (!data) return;
-                // if we used fallback, ensure we only include this student's docs
-                if (data.studentId && data.studentId === studentId) {
-                    results.push({ id: doc.id, ...data });
-                } else if (!data.studentId && data.student && data.student.id === studentId) {
-                    // legacy format fallback
-                    results.push({ id: doc.id, ...data });
-                }
+            snap.forEach(doc => {
+                const d = doc.data() || {};
+                d.id = doc.id;
+                if (d.date && d.date.toDate && typeof d.date.toDate === 'function') d.date = d.date.toDate();
+                else if (!d.date) d.date = new Date();
+                results.push(d);
             });
 
-            // sort by date desc (safety)
-            results.sort((a, b) => new Date(b.date) - new Date(a.date));
+            this.testResults = results || [];
+            this.recomputeSummaryStats();
 
-            this.testResults = results;
-
-            // Recompute best metrics from results (authoritative)
-            await this.recomputeAndSyncBestMetrics();
-
-            // Update recent / all results UI
             this.displayRecentResults();
             this.displayAllResults();
 
+            this.initTrendCharts();
+
+            return this.testResults;
         } catch (err) {
             console.error('Error loading test results:', err);
-            this.showToast('Error loading test results. See console.', 'error');
+            throw err;
         }
     }
 
-    /**
-     * Recompute best MCQ %, best english/hindi WPM from testResults
-     * If student doc is missing these keys or the recomputed value is better, update the student doc.
-     */
-    async recomputeAndSyncBestMetrics() {
+    recomputeSummaryStats() {
+        const all = this.testResults || [];
+        const mcqTests = all.filter(r => r.testType && r.testType.toLowerCase().includes('mcq'));
+        const typingTests = all.filter(r => r.testType && r.testType.toLowerCase().includes('typing'));
+
+        const totalMcqTests = mcqTests.length;
+        const totalTypingTests = typingTests.length;
+
+        const avgScore = mcqTests.length ? Math.round((mcqTests.reduce((s, r) => s + (Number(r.score || 0)), 0) / mcqTests.length) * 100) / 100 : 0;
+        const bestScore = mcqTests.length ? Math.max(...mcqTests.map(r => Number(r.score || 0))) : 0;
+
+        let bestEnglishWpm = 0, bestHindiWpm = 0;
+        typingTests.forEach(t => {
+            const lang = (t.language || t.lang || '').toString().toLowerCase();
+            const w = Number(t.wpm || 0);
+            if (lang.includes('hindi')) bestHindiWpm = Math.max(bestHindiWpm, w);
+            else bestEnglishWpm = Math.max(bestEnglishWpm, w);
+        });
+
+        if (this.elements.totalMcqTests) this.elements.totalMcqTests.textContent = totalMcqTests;
+        if (this.elements.avgScore) this.elements.avgScore.textContent = (avgScore !== null ? (avgScore + '%') : '-');
+        if (this.elements.totalTypingTests) this.elements.totalTypingTests.textContent = totalTypingTests;
+        if (this.elements.bestScore) this.elements.bestScore.textContent = (bestScore !== null ? (bestScore + '%') : '-');
+        if (this.elements.bestEnglishWpm) this.elements.bestEnglishWpm.textContent = (bestEnglishWpm || '-');
+        if (this.elements.bestHindiWpm) this.elements.bestHindiWpm.textContent = (bestHindiWpm || '-');
+
         try {
-            if (!this.studentId) return;
-
-            let bestMcqScore = 0;
-            let bestEnglishWpm = 0;
-            let bestHindiWpm = 0;
-            let totalScoreForAvg = 0;
-            let testsCount = 0;
-            let typingTestsCount = 0;
-            let mcqTestsCount = 0;
-
-            this.testResults.forEach(r => {
-                // unify numeric fields
-                const score = Number(r.score || 0);
-                const accuracy = Number(r.accuracy || 0);
-                const wpm = Number(r.wpm || 0);
-
-                // general counters
-                testsCount++;
-
-                if ((r.testType || '').toLowerCase() === 'mcq' || r.testType === 'MCQ') {
-                    mcqTestsCount++;
-                    bestMcqScore = Math.max(bestMcqScore, score);
-                    totalScoreForAvg += score;
-                } else if ((r.testType || '').toLowerCase() === 'typing' || r.testType === 'Typing') {
-                    typingTestsCount++;
-                    // testCategory likely 'english' or 'hindi'
-                    const cat = (r.testCategory || '').toLowerCase();
-                    // use NET WPM stored in r.wpm (we expect tests to store NET WPM)
-                    if (cat === 'english') bestEnglishWpm = Math.max(bestEnglishWpm, wpm);
-                    else if (cat === 'hindi') bestHindiWpm = Math.max(bestHindiWpm, wpm);
-
-                    // for averaging, treat typing score contribution as accuracy (0-100)
-                    totalScoreForAvg += (accuracy || 0);
-                } else {
-                    // fallback: if r.score exists treat as MCQ; if accuracy exists treat as typing
-                    if (r.score != null) {
-                        mcqTestsCount++;
-                        bestMcqScore = Math.max(bestMcqScore, score);
-                        totalScoreForAvg += score;
-                    } else if (r.accuracy != null) {
-                        typingTestsCount++;
-                        totalScoreForAvg += (accuracy || 0);
+            if (window.firebase && firebase.firestore && this.studentId) {
+                const stuRef = firebase.firestore().collection('students').doc(this.studentId);
+                stuRef.get().then(doc => {
+                    if (doc && doc.exists) {
+                        const data = doc.data() || {};
+                        const upd = {};
+                        if ((data.bestTypingWpmEnglish || 0) < bestEnglishWpm) upd.bestTypingWpmEnglish = bestEnglishWpm;
+                        if ((data.bestTypingWpmHindi || 0) < bestHindiWpm) upd.bestTypingWpmHindi = bestHindiWpm;
+                        if ((data.bestMcqScore || 0) < bestScore) upd.bestMcqScore = bestScore;
+                        if (Object.keys(upd).length) stuRef.update(upd).catch(e=>console.warn('update student bests failed', e));
                     }
-                }
-            });
-
-            // Safety: if no tests, leave values as 0
-            const averageScore = testsCount > 0 ? Math.round(totalScoreForAvg / testsCount) : 0;
-
-            // Update UI elements
-            if (this.elements.totalMcqTests) this.elements.totalMcqTests.textContent = mcqTestsCount;
-            if (this.elements.totalTypingTests) this.elements.totalTypingTests.textContent = typingTestsCount;
-            if (this.elements.avgScore) this.elements.avgScore.textContent = `${averageScore}%`;
-            if (this.elements.bestScore) this.elements.bestScore.textContent = `${bestMcqScore}%`;
-            if (this.elements.bestEnglishWpm) this.elements.bestEnglishWpm.textContent = `${bestEnglishWpm} WPM`;
-            if (this.elements.bestHindiWpm) this.elements.bestHindiWpm.textContent = `${bestHindiWpm} WPM`;
-
-            // Now synchronize improved values back to student doc (if better)
-            const db = firebase.firestore();
-            const sref = db.collection('students').doc(this.studentId);
-            const sdoc = await sref.get();
-            const current = sdoc.exists ? (sdoc.data() || {}) : {};
-
-            const updatePayload = {};
-
-            // testsTaken, mcqTestsTaken, typingTestsTaken, totalScore, averageScore, bestScore etc.
-            updatePayload.testsTaken = Math.max(current.testsTaken || 0, testsCount);
-            updatePayload.mcqTestsTaken = Math.max(current.mcqTestsTaken || 0, mcqTestsCount);
-            updatePayload.typingTestsTaken = Math.max(current.typingTestsTaken || 0, typingTestsCount);
-            updatePayload.totalScore = Math.max(current.totalScore || 0, totalScoreForAvg);
-            updatePayload.averageScore = Math.max(current.averageScore || 0, averageScore);
-            updatePayload.bestScore = Math.max(current.bestScore || 0, bestMcqScore, current.bestScore || 0);
-            // language-specific bests
-            updatePayload.bestMcqScore = Math.max(current.bestMcqScore || 0, bestMcqScore);
-            updatePayload.bestTypingWpmEnglish = Math.max(current.bestTypingWpmEnglish || 0, bestEnglishWpm);
-            updatePayload.bestTypingWpmHindi = Math.max(current.bestTypingWpmHindi || 0, bestHindiWpm);
-
-            // lastTestDate
-            if (this.testResults.length > 0) {
-                updatePayload.lastTestDate = firebase.firestore.FieldValue.serverTimestamp();
+                }).catch(e=>{/* ignore */});
             }
-
-            // Only update if there's a real change to avoid unnecessary writes
-            let needUpdate = false;
-            Object.keys(updatePayload).forEach(k => {
-                const newVal = updatePayload[k];
-                const oldVal = current[k];
-                if (oldVal === undefined || oldVal === null) {
-                    needUpdate = true;
-                } else {
-                    // numeric comparison
-                    if (typeof newVal === 'number' && newVal > oldVal) needUpdate = true;
-                    else if (typeof newVal !== 'number' && newVal !== oldVal) needUpdate = true;
-                }
-            });
-
-            if (needUpdate) {
-                try {
-                    await sref.update(updatePayload);
-                    console.log('Student stats synced with recomputed best metrics', updatePayload);
-                } catch (err) {
-                    console.warn('Failed to update student doc with recomputed metrics', err);
-                }
-            }
-
-        } catch (err) {
-            console.error('Error recomputing/syncing best metrics:', err);
-        }
+        } catch(e){ /* ignore */ }
     }
 
-    /**
-     * Update stats UI using student doc (fallback)
-     */
-    updateStats(studentData = {}) {
-        // If recomputed values exist they will be overwritten by recomputeAndSyncBestMetrics later,
-        // but this gives a quick display while testResults load.
-        const mcqTestsTaken = studentData.mcqTestsTaken || 0;
-        const typingTestsTaken = studentData.typingTestsTaken || 0;
-        const avgScore = studentData.averageScore || 0;
-        const bestMcq = studentData.bestMcqScore || studentData.bestScore || 0;
-        const bestEnglish = studentData.bestTypingWpmEnglish || 0;
-        const bestHindi = studentData.bestTypingWpmHindi || 0;
-
-        if (this.elements.totalMcqTests) this.elements.totalMcqTests.textContent = mcqTestsTaken;
-        if (this.elements.totalTypingTests) this.elements.totalTypingTests.textContent = typingTestsTaken;
-        if (this.elements.avgScore) this.elements.avgScore.textContent = `${avgScore}%`;
-        if (this.elements.bestScore) this.elements.bestScore.textContent = `${bestMcq}%`;
-        if (this.elements.bestEnglishWpm) this.elements.bestEnglishWpm.textContent = `${bestEnglish} WPM`;
-        if (this.elements.bestHindiWpm) this.elements.bestHindiWpm.textContent = `${bestHindi} WPM`;
-    }
-
-    displayRecentResults() {
+    displayRecentResults(limit = 5) {
+        const rows = (this.testResults || []).slice(-limit).reverse();
         if (!this.elements.recentResultsBody) return;
-
-        const recent = (this.testResults && this.testResults.slice(0, 6)) || [];
-        if (recent.length === 0) {
-            this.elements.recentResultsBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No recent activity</td></tr>`;
-            return;
-        }
-
         let html = '';
-        recent.forEach(r => {
-            const date = r.date ? new Date(r.date).toLocaleString() : '-';
-            const type = r.testType || r.testType === 'MCQ' ? (r.testType) : (r.testCategory ? (r.testCategory + ' - Typing') : 'Test');
-            const scoreText = r.testType === 'MCQ' ? `${r.score || 0}%` : `${r.wpm || 0} WPM (${r.accuracy || 0}%)`;
-
+        rows.forEach(r => {
+            const date = (r.date && r.date.toLocaleString) ? r.date.toLocaleString() : (r.date || '-');
+            const testName = r.testName || r.testCategory || (r.testType ? r.testType : 'Test');
+            const scoreText = r.score != null ? (r.score + '%') : (r.wpm ? (r.wpm + ' WPM') : '-');
             html += `
-                <tr>
-                    <td class="px-6 py-3 text-sm font-medium text-gray-900">${r.testName || '-'}</td>
-                    <td class="px-6 py-3 text-sm text-gray-500">${type}</td>
+                <tr class="border-b">
+                    <td class="px-6 py-3 text-sm text-gray-600">${testName}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">${r.testType || '-'}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">${r.testMode === 'main' ? 'Main' : 'Practice'}</td>
                     <td class="px-6 py-3 text-sm font-medium text-gray-900">${scoreText}</td>
-                    <td class="px-6 py-3 text-sm text-gray-500">${r.testMode === 'main' ? 'Main' : 'Practice'}</td>
+                    <td class="px-6 py-3 text-sm text-gray-500">${r.studentName || '-'}</td>
                     <td class="px-6 py-3 text-sm text-gray-500">${date}</td>
                 </tr>
             `;
         });
-
         this.elements.recentResultsBody.innerHTML = html;
     }
 
     displayAllResults() {
         if (!this.elements.allResultsBody) return;
-
         const filter = (this.elements.resultFilter && this.elements.resultFilter.value) ? this.elements.resultFilter.value : 'all';
-
-        let filtered = (this.testResults || []).slice();
-
-        if (filter === 'mcq') filtered = filtered.filter(r => (r.testType || '').toLowerCase() === 'mcq' || r.score != null);
-        else if (filter === 'typing') filtered = filtered.filter(r => (r.testType || '').toLowerCase() === 'typing' || r.accuracy != null);
-        else if (filter === 'practice') filtered = filtered.filter(r => r.testMode === 'practice');
-        else if (filter === 'main') filtered = filtered.filter(r => r.testMode === 'main');
-
-        if (filtered.length === 0) {
-            this.elements.allResultsBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No results found</td></tr>`;
-            return;
-        }
-
+        const items = (this.testResults || []).slice().reverse();
         let html = '';
-        filtered.forEach(r => {
-            const date = r.date ? new Date(r.date).toLocaleString() : '-';
-            const scoreText = r.testType === 'MCQ' ? `${r.score || 0}%` : `${r.wpm || 0} WPM (${r.accuracy || 0}%)`;
+        items.forEach(r => {
+            if (filter !== 'all') {
+                if (filter === 'typing' && !(r.testType && r.testType.toLowerCase().includes('typing'))) return;
+                if (filter === 'mcq' && !(r.testType && r.testType.toLowerCase().includes('mcq'))) return;
+            }
+            const date = (r.date && r.date.toLocaleString) ? r.date.toLocaleString() : (r.date || '-');
+            const testName = r.testName || r.testCategory || (r.testType ? r.testType : 'Test');
+            const scoreText = r.score != null ? (r.score + '%') : (r.wpm ? (r.wpm + ' WPM / ' + (r.accuracy ? r.accuracy + '%' : '-')) : '-');
 
             html += `
-                <tr>
-                    <td class="px-6 py-3 text-sm font-medium text-gray-900">${r.testName || '-'}</td>
-                    <td class="px-6 py-3 text-sm text-gray-500">${r.testType || (r.testCategory ? (r.testCategory + ' - Typing') : '-')}</td>
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-6 py-3 text-sm text-gray-800 font-medium">${testName}</td>
+                    <td class="px-6 py-3 text-sm text-gray-500">${r.testType || '-'}</td>
                     <td class="px-6 py-3 text-sm text-gray-500">${r.testMode === 'main' ? 'Main' : 'Practice'}</td>
                     <td class="px-6 py-3 text-sm font-medium text-gray-900">${scoreText}</td>
                     <td class="px-6 py-3 text-sm text-gray-500">${r.duration ? this._formatDuration(r.duration) : '-'}</td>
@@ -447,9 +334,7 @@ class StudentDashboard {
     }
 
     switchTab(tabName) {
-        // hide all tab contents: any element with class 'tab-content'
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        // show the requested tab content: element id = tabName + 'Tab' or element with id = tabName
         const el = document.getElementById(tabName + 'Tab') || document.getElementById(tabName);
         if (el) el.classList.remove('hidden');
     }
@@ -480,6 +365,254 @@ class StudentDashboard {
         toast.classList.remove('hidden');
         setTimeout(() => toast.classList.add('hidden'), 3000);
     }
+
+    /* ---------- Trend charts (Chart.js) ---------- */
+    initTrendCharts() {
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not loaded. Include Chart.js before dashboard.js to see trend charts.');
+            return;
+        }
+        this.renderTypingTrend();
+        this.renderMcqTrend();
+    }
+
+    _prepareTimeSeries() {
+        const items = (this.testResults || []).slice().map(r => {
+            return {
+                date: r.date ? new Date(r.date) : new Date(),
+                mode: (r.testMode === 'main' ? 'main' : 'practice'),
+                type: (r.testType || (r.testCategory && r.wpm ? 'Typing' : (r.score != null ? 'MCQ' : 'Unknown'))),
+                score: Number(r.score || 0),
+                wpm: Number(r.wpm || 0),
+                accuracy: Number(r.accuracy || 0),
+                label: r.testName || (r.testCategory ? r.testCategory : 'Test')
+            };
+        }).sort((a,b) => a.date - b.date);
+        return items;
+    }
+
+    _renderChart(canvasId, config) {
+        try {
+            const el = document.getElementById(canvasId);
+            if (!el) return null;
+            if (this._charts && this._charts[canvasId]) {
+                try { this._charts[canvasId].destroy(); } catch(e){/* ignore */ }
+                this._charts[canvasId] = null;
+            }
+            const ctx = el.getContext('2d');
+            this._charts = this._charts || {};
+            this._charts[canvasId] = new Chart(ctx, config);
+            return this._charts[canvasId];
+        } catch (e) {
+            console.error('Chart render error', e);
+            return null;
+        }
+    }
+
+    // --- Solid charts: plot only relevant points to avoid nulls / weird scaling ---
+    renderTypingTrend() {
+        const all = this._prepareTimeSeries();
+        const typingItems = all.filter(it => it.type && it.type.toString().toLowerCase().includes('typing'));
+        if (!typingItems.length) {
+            if (this._charts && this._charts['typingTrendChart']) {
+                try { this._charts['typingTrendChart'].destroy(); } catch(e) {}
+                this._charts['typingTrendChart'] = null;
+            }
+            return;
+        }
+
+        const labels = typingItems.map(it => it.date.toLocaleString());
+        const practicePoints = typingItems.filter(it => it.mode === 'practice');
+        const mainPoints     = typingItems.filter(it => it.mode === 'main');
+
+        const practiceData = practicePoints.map(it => ({ x: it.date.toLocaleString(), y: it.wpm }));
+        const mainData     = mainPoints.map(it => ({ x: it.date.toLocaleString(), y: it.wpm }));
+        const practiceAcc  = practicePoints.map(it => ({ x: it.date.toLocaleString(), y: it.accuracy }));
+        const mainAcc      = mainPoints.map(it => ({ x: it.date.toLocaleString(), y: it.accuracy }));
+
+        const config = {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Practice WPM',
+                        data: practiceData,
+                        borderColor: 'rgba(37,99,235,1)',
+                        backgroundColor: 'rgba(37,99,235,0.08)',
+                        tension: 0.2,
+                        fill: false,
+                        spanGaps: false,
+                        yAxisID: 'yWpm',
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Main WPM',
+                        data: mainData,
+                        borderColor: 'rgba(16,185,129,1)',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        tension: 0.2,
+                        fill: false,
+                        spanGaps: false,
+                        yAxisID: 'yWpm',
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Practice Accuracy %',
+                        data: practiceAcc,
+                        borderDash: [6,4],
+                        borderColor: 'rgba(37,99,235,0.95)',
+                        backgroundColor: 'transparent',
+                        tension: 0.2,
+                        fill: false,
+                        spanGaps: false,
+                        yAxisID: 'yAcc',
+                        pointRadius: 2,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: 'Main Accuracy %',
+                        data: mainAcc,
+                        borderDash: [6,4],
+                        borderColor: 'rgba(16,185,129,0.95)',
+                        backgroundColor: 'transparent',
+                        tension: 0.2,
+                        fill: false,
+                        spanGaps: false,
+                        yAxisID: 'yAcc',
+                        pointRadius: 2,
+                        pointHoverRadius: 5
+                    }
+                ]
+            },
+            options: {
+                parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+                normalized: true,
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'nearest', intersect: false },
+                scales: {
+                    yWpm: {
+                        type: 'linear',
+                        position: 'left',
+                        min: 0,
+                        suggestedMin: 0,
+                        title: { display: true, text: 'WPM' }
+                    },
+                    yAcc: {
+                        type: 'linear',
+                        position: 'right',
+                        min: 0,
+                        suggestedMin: 0,
+                        max: 100,
+                        title: { display: true, text: 'Accuracy (%)' },
+                        grid: { drawOnChartArea: false }
+                    },
+                    x: {
+                        type: 'category',
+                        ticks: { autoSkip: true, maxRotation: 30, minRotation: 10 }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                const y = context.parsed.y;
+                                if (datasetLabel.toLowerCase().includes('accuracy')) return datasetLabel + ': ' + (y != null ? y + '%' : '-');
+                                return datasetLabel + ': ' + (y != null ? y : '-');
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        this._renderChart('typingTrendChart', config);
+    }
+
+    renderMcqTrend() {
+        const all = this._prepareTimeSeries();
+        const mcqItems = all.filter(it => it.type && it.type.toString().toLowerCase().includes('mcq'));
+        if (!mcqItems.length) {
+            if (this._charts && this._charts['mcqTrendChart']) {
+                try { this._charts['mcqTrendChart'].destroy(); } catch(e) {}
+                this._charts['mcqTrendChart'] = null;
+            }
+            return;
+        }
+
+        const labels = mcqItems.map(it => it.date.toLocaleString());
+        const practicePoints = mcqItems.filter(it => it.mode === 'practice').map(it => ({ x: it.date.toLocaleString(), y: it.score }));
+        const mainPoints     = mcqItems.filter(it => it.mode === 'main').map(it => ({ x: it.date.toLocaleString(), y: it.score }));
+
+        const config = {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Practice Marks (%)',
+                        data: practicePoints,
+                        borderColor: 'rgba(37,99,235,1)',
+                        backgroundColor: 'rgba(37,99,235,0.06)',
+                        tension: 0.2,
+                        fill: false,
+                        spanGaps: false,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Main Marks (%)',
+                        data: mainPoints,
+                        borderColor: 'rgba(16,185,129,1)',
+                        backgroundColor: 'rgba(16,185,129,0.06)',
+                        tension: 0.2,
+                        fill: false,
+                        spanGaps: false,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+                normalized: true,
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'nearest', intersect: false },
+                scales: {
+                    x: {
+                        type: 'category',
+                        ticks: { autoSkip: true, maxRotation: 30, minRotation: 10 }
+                    },
+                    y: {
+                        min: 0,
+                        suggestedMin: 0,
+                        max: 100,
+                        title: { display: true, text: 'Marks (%)' },
+                        ticks: { stepSize: 10 }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const y = context.parsed.y;
+                                return (context.dataset.label || '') + ': ' + (y != null ? y + '%' : '-');
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        this._renderChart('mcqTrendChart', config);
+    }
 }
 
 // expose globally
@@ -487,9 +620,9 @@ let studentDashboard;
 document.addEventListener('DOMContentLoaded', () => {
     studentDashboard = new StudentDashboard();
     window.studentDashboard = studentDashboard;
-    console.log('✅ StudentDashboard initialized (full)');
+    console.log('✅ StudentDashboard initialized (full, solid charts)');
 });
-// ------- Safe attach for StudentDashboard / studentDashboard -------
+
 if (typeof window.StudentDashboard === 'undefined' && typeof StudentDashboard === 'function') {
   window.StudentDashboard = StudentDashboard;
 }

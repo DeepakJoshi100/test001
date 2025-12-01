@@ -1953,8 +1953,7 @@ const DEFAULT_QUESTION_BANK = {
 
 
 ,
-    'ccc': [],
-    'dca': [
+    'ccc': [
     {
         id: 'ccc_q1',
         question: 'What does CPU stand for?',

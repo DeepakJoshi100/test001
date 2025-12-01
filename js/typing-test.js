@@ -537,3 +537,4 @@ if (!window.typingTest && typeof window.TypingTest === 'function') {
   try { window.typingTest = new window.TypingTest(); console.log('typingTest auto-instantiated'); }
   catch (e) { console.warn('typingTest instantiation failed (safe):', e); }
 }
+
