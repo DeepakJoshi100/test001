@@ -18,14 +18,19 @@ window.typingContent = window.typingContent || {
         "पर्यावरण संरक्षण हम सभी की जिम्मेदारी है।"
     ],
     krutidev: [
-        // KrutiDev strings can be the same unicode here for demo; in production replace with KrutiDev encoded text if necessary
+        // NOTE: These are NOT normal English sentences.
+        // They are Kruti Dev ASCII codes. When font = "Kruti Dev 010",
+        // this text appears as proper Hindi.
         "Hkkjr ,d fo'kky ns'k gSA ;gk¡ fofHkUu laLÑfr;k¡ vkSj ijaik,a gSaA",
         "f'k{kk thou dh uhao gS vkSj gesa vkxs c<+us esa enn djrh gSA"
+        // add more Kruti-encoded lines if you want
     ]
 };
 
 window.getRandomTypingParagraph = function(language = 'english') {
-    const arr = Array.isArray(window.typingContent[language]) ? window.typingContent[language] : window.typingContent['english'];
+    const arr = Array.isArray(window.typingContent[language])
+        ? window.typingContent[language]
+        : window.typingContent['english'];
     if (!Array.isArray(arr) || arr.length === 0) return '';
     const i = Math.floor(Math.random() * arr.length);
     return arr[i] || '';

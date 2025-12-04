@@ -2,7 +2,22 @@
    Clean blue & white theme — primary readable text is BLACK (#000)
    Decorative accents use blue tones. Designed for the app's existing HTML structure.
 */
+@font-face {
+    font-family: 'Kruti Dev 010';
+    src: url('KrutiDev010.ttf') format('truetype');  /* same folder as styles.css */
+    font-weight: normal;
+    font-style: normal;
+}
 
+.kruti-mode {
+    font-family: 'Kruti Dev 010', 'Mangal', sans-serif;
+    font-size: 20px;
+    line-height: 1.8;
+}
+
+#textDisplay {
+    white-space: pre-wrap;
+}
 /* ---------- Variables ---------- */
 :root{
   --bg-1: #f6fbff;           /* pale blue page bg */
@@ -417,3 +432,4 @@ button.loading-btn::after{
 #mcqSummaryPage .option.picked { box-shadow: inset 0 0 0 2px rgba(59,130,246,0.06); }
 #mcqSummaryPage .marker { font-weight:700; margin-left:10px; }
 #mcqSummaryPage .question-meta { font-size:.9rem; color:#6b7280; margin-top:6px; }
+

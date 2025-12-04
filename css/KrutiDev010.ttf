@@ -1,0 +1,6 @@
+@font-face {
+    font-family: 'Kruti Dev 010';
+    src: url('fonts/KrutiDev010.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
