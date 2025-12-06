@@ -370,14 +370,14 @@ button.loading-btn::after{
 .typing-text .correct-char,
 #textDisplay .correct-char {
   background: rgba(42,160,255,0.12);
-  color: inherit;
+  color: green;
   border-radius: 2px;
 }
 
 .typing-text .error-char,
 #textDisplay .error-char {
   background: rgba(255,90,90,0.12);
-  color: inherit;
+  color: red;
   border-radius: 2px;
 }
 
